@@ -1,0 +1,238 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   AI FINANCIAL BUDGET ADVISOR - DESIGN SYSTEM
+   Visual Identity: Emerald + Teal + Violet
+   ========================================================================== */
+
+:root, :root.dark {
+  /* Dark Mode Palette (Default) */
+  --bg-canvas: #101815;
+  --bg-surface: #18221E;
+  --bg-surface-elevated: #1F2C27;
+  --text-main: #ECFDF5;
+  --text-muted: #9AAEA5;
+  --border: #304139;
+  --border-subtle: #24332D;
+
+  /* Brand Colors */
+  --primary: #34D399;
+  --primary-hover: #6EE7B7;
+  --primary-subtle: rgba(52, 211, 153, 0.12);
+  --secondary: #2DD4BF;
+  --secondary-hover: #5EEAD4;
+  --secondary-subtle: rgba(45, 212, 191, 0.12);
+
+  /* Status Colors */
+  --success: #4ADE80;
+  --warning: #FBBF24;
+  --warning-subtle: rgba(251, 191, 36, 0.12);
+  --error: #F87171;
+  --error-subtle: rgba(248, 113, 113, 0.12);
+
+  /* AI Accent (Violet) */
+  --ai-accent: #A78BFA;
+  --ai-accent-hover: #C4B5FD;
+  --ai-bg: rgba(167, 139, 250, 0.08);
+  --ai-border: rgba(167, 139, 250, 0.28);
+  --ai-text: #DDD6FE;
+
+  /* Button Specifics */
+  --btn-primary-bg: #34D399;
+  --btn-primary-text: #101815;
+  --btn-primary-hover: #6EE7B7;
+  --btn-ai-bg: #A78BFA;
+  --btn-ai-text: #101815;
+  --btn-ai-hover: #C4B5FD;
+
+  /* Compatibility Aliases */
+  --primary-bg: var(--bg-canvas);
+  --secondary-bg: var(--bg-surface);
+  --card-bg: var(--bg-surface);
+  --border-color: var(--border);
+  --text-primary: var(--text-main);
+  --text-secondary: var(--text-muted);
+  --text-on-accent: #101815;
+  --accent-primary: var(--primary);
+  --accent-secondary: var(--secondary);
+  --accent-success: var(--success);
+  --accent-warning: var(--warning);
+  --accent-danger: var(--error);
+
+  /* Gradients & Shadows */
+  --gradient-primary: linear-gradient(135deg, #34D399 0%, #2DD4BF 100%);
+  --gradient-emerald: linear-gradient(135deg, #059669 0%, #34D399 100%);
+  --gradient-ai: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  --gradient-success: linear-gradient(135deg, #16A34A 0%, #4ADE80 100%);
+  --gradient-warning: linear-gradient(135deg, #D97706 0%, #FBBF24 100%);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(52, 211, 153, 0.15);
+  --shadow-ai-glow: 0 0 20px rgba(167, 139, 250, 0.2);
+}
+
+:root.light {
+  /* Light Mode Palette */
+  --bg-canvas: #F7FAF9;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #F0F4F2;
+  --text-main: #17201C;
+  --text-muted: #64746C;
+  --border: #DDE7E2;
+  --border-subtle: #EDF3F0;
+
+  /* Brand Colors */
+  --primary: #059669;
+  --primary-hover: #047857;
+  --primary-subtle: rgba(5, 150, 105, 0.08);
+  --secondary: #0D9488;
+  --secondary-hover: #0F766E;
+  --secondary-subtle: rgba(13, 148, 136, 0.08);
+
+  /* Status Colors */
+  --success: #16A34A;
+  --warning: #D97706;
+  --warning-subtle: rgba(217, 119, 6, 0.08);
+  --error: #DC2626;
+  --error-subtle: rgba(220, 38, 38, 0.08);
+
+  /* AI Accent (Violet) */
+  --ai-accent: #8B5CF6;
+  --ai-accent-hover: #7C3AED;
+  --ai-bg: rgba(139, 92, 246, 0.06);
+  --ai-border: rgba(139, 92, 246, 0.22);
+  --ai-text: #6D28D9;
+
+  /* Button Specifics */
+  --btn-primary-bg: #059669;
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-hover: #047857;
+  --btn-ai-bg: #8B5CF6;
+  --btn-ai-text: #FFFFFF;
+  --btn-ai-hover: #7C3AED;
+
+  /* Compatibility Aliases */
+  --primary-bg: var(--bg-canvas);
+  --secondary-bg: var(--bg-surface);
+  --card-bg: var(--bg-surface);
+  --border-color: var(--border);
+  --text-primary: var(--text-main);
+  --text-secondary: var(--text-muted);
+  --text-on-accent: #FFFFFF;
+  --accent-primary: var(--primary);
+  --accent-secondary: var(--secondary);
+  --accent-success: var(--success);
+  --accent-warning: var(--warning);
+  --accent-danger: var(--error);
+
+  /* Gradients & Shadows */
+  --gradient-primary: linear-gradient(135deg, #059669 0%, #0D9488 100%);
+  --gradient-emerald: linear-gradient(135deg, #047857 0%, #059669 100%);
+  --gradient-ai: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  --gradient-success: linear-gradient(135deg, #15803D 0%, #16A34A 100%);
+  --gradient-warning: linear-gradient(135deg, #B45309 0%, #D97706 100%);
+
+  --shadow-sm: 0 1px 3px 0 rgba(23, 32, 28, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(23, 32, 28, 0.06), 0 2px 4px -1px rgba(23, 32, 28, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(23, 32, 28, 0.07), 0 4px 6px -2px rgba(23, 32, 28, 0.03);
+  --shadow-glow: 0 0 20px rgba(5, 150, 105, 0.1);
+  --shadow-ai-glow: 0 0 20px rgba(139, 92, 246, 0.12);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+code {
+  font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(52, 211, 153, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 0.8s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
