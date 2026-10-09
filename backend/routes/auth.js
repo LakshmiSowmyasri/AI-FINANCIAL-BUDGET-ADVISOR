@@ -23,15 +23,30 @@ router.post('/register', [
     }
 
     const { name, email, phone, password, monthlyIncome } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedPhone = phone ? String(phone).trim() : null;
     const pool = getPool();
 
-    // Check existing user
-    const [existing] = await pool.execute(
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const [existingEmail] = await pool.execute(
       'SELECT id FROM users WHERE email = ?',
-      [email]
+      [normalizedEmail]
     );
-    if (existing.length > 0) {
+    if (existingEmail.length > 0) {
       return res.status(400).json({ error: 'An account with this email already exists' });
+    }
+
+    if (normalizedPhone) {
+      const [existingPhone] = await pool.execute(
+        'SELECT id FROM users WHERE phone = ?',
+        [normalizedPhone]
+      );
+      if (existingPhone.length > 0) {
+        return res.status(400).json({ error: 'An account with this phone number already exists' });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -40,7 +55,7 @@ router.post('/register', [
 
     await pool.execute(
       'INSERT INTO users (id, name, email, phone, password, monthly_income) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, name, email, phone || null, hashedPassword, income]
+      [userId, name.trim(), normalizedEmail, normalizedPhone, hashedPassword, income]
     );
 
     // Create default budget categories
@@ -151,21 +166,38 @@ router.post('/forgot-password', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email } = req.body;
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    const developmentOtpMode = process.env.NODE_ENV === 'development' && !emailService.isConfigured();
+    if (!emailService.isConfigured() && !developmentOtpMode) {
+      return res.status(503).json({
+        error: 'Email delivery is not configured. Set EMAIL_USER and a Gmail App Password in the backend .env file.'
+      });
+    }
+
     const pool = getPool();
 
     // Check user exists (don't reveal if not found for security)
     const [users] = await pool.execute('SELECT id, name FROM users WHERE email = ?', [email]);
 
+    let developmentOtp;
     if (users.length > 0) {
-      // Send OTP
-      await otpService.sendEmailOTP(email, 'reset');
+      const result = await otpService.sendEmailOTP(email, 'reset');
+      if (!result.success) {
+        console.error('Forgot password OTP delivery failed:', result.message);
+        return res.status(503).json({
+          error: result.message || 'Unable to send the OTP email. Please try again later.'
+        });
+      }
+      developmentOtp = result.developmentOtp;
     }
 
-    // Always return success (security: don't reveal if email exists)
     res.json({
-      message: 'If an account exists with this email, an OTP has been sent.',
-      success: true
+      message: developmentOtpMode
+        ? 'Development mode: the OTP is shown on this page.'
+        : 'If an account exists with this email, an OTP has been sent.',
+      success: true,
+      ...(developmentOtp ? { developmentOtp } : {})
     });
   } catch (err) {
     console.error('Forgot password error:', err);
@@ -262,69 +294,6 @@ router.post('/reset-password', [
   } catch (err) {
     console.error('Reset password error:', err);
     res.status(500).json({ error: 'Password reset failed. Please try again.' });
-  }
-});
-
-// ============================================================
-// POST /api/auth/send-otp (for OTP login)
-// ============================================================
-router.post('/send-otp', [
-  body('email').isEmail().normalizeEmail()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-    const { email, purpose = 'login' } = req.body;
-    await otpService.sendEmailOTP(email, purpose);
-    res.json({ success: true, message: 'OTP sent to your email' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to send OTP' });
-  }
-});
-
-// ============================================================
-// POST /api/auth/verify-otp (for OTP login/register)
-// ============================================================
-router.post('/verify-otp', async (req, res) => {
-  try {
-    const { email, otp, purpose = 'login', name, monthlyIncome } = req.body;
-
-    const result = await otpService.verifyOTP(email, otp, purpose, 'email');
-    if (!result.success) {
-      return res.status(400).json({ error: result.message });
-    }
-
-    const pool = getPool();
-    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    let user = users[0];
-
-    if (!user && (purpose === 'register' || purpose === 'login')) {
-      if (!name) return res.status(400).json({ error: 'Name is required for new account' });
-
-      const id = uuidv4();
-      const pwd = await bcrypt.hash(uuidv4(), 10);
-      await pool.execute(
-        'INSERT INTO users (id, name, email, password, monthly_income, is_email_verified) VALUES (?, ?, ?, ?, ?, TRUE)',
-        [id, name, email, pwd, parseFloat(monthlyIncome) || 0]
-      );
-      const [newUsers] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
-      user = newUsers[0];
-    }
-
-    if (!user) return res.status(404).json({ error: 'User not found. Please register first.' });
-
-    await pool.execute('UPDATE users SET last_login = NOW(), is_email_verified = TRUE WHERE id = ?', [user.id]);
-
-    const token = generateToken(user.id);
-    res.json({
-      success: true,
-      token,
-      user: { id: user.id, name: user.name, email: user.email, monthlyIncome: user.monthly_income }
-    });
-  } catch (err) {
-    console.error('Verify OTP error:', err);
-    res.status(500).json({ error: 'Verification failed' });
   }
 });
 

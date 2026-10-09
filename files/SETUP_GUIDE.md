@@ -91,6 +91,8 @@ npm run dev
 
 > ✅ Once configured, OTPs are sent automatically on Forgot Password, registration, and login.
 
+> For local development only, if email is not configured and `NODE_ENV=development`, the forgot-password page displays the OTP instead. Configure SMTP before deploying; this fallback is disabled outside development.
+
 ---
 
 ## Step 4 — Claude AI API Key

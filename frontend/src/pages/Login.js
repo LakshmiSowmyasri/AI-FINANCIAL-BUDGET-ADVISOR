@@ -1,38 +1,9 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaRupeeSign, FaCommentDots } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaRupeeSign } from 'react-icons/fa';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
-import OTPAuth from '../components/OTPAuth';
-
-const TabContainer = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
-`;
-
-const Tab = styled.button`
-  flex: 1;
-  padding: 11px 16px;
-  border: 1px solid ${props => props.active ? 'var(--primary)' : 'var(--border)'};
-  border-radius: var(--radius-md);
-  background: ${props => props.active ? 'rgba(5, 150, 105, 0.1)' : 'var(--bg-canvas)'};
-  color: ${props => props.active ? 'var(--primary)' : 'var(--text-muted)'};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-
-  &:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-  }
-`;
 
 const LoginContainer = styled.div`
   min-height: 100vh;
@@ -243,8 +214,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [authMethod, setAuthMethod] = useState('password');
-  
+
   const { login, user } = useAuth();
 
   if (user) {
@@ -283,92 +253,54 @@ const Login = () => {
           <p>Sign in to manage your finances</p>
         </Logo>
 
-        <TabContainer>
-          <Tab 
-            active={authMethod === 'password'} 
-            onClick={() => setAuthMethod('password')}
-          >
-            <FaLock /> Password
-          </Tab>
-          <Tab 
-            active={authMethod === 'otp'} 
-            onClick={() => setAuthMethod('otp')}
-          >
-            <FaCommentDots /> OTP
-          </Tab>
-        </TabContainer>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {error && <ErrorMessage>{error}</ErrorMessage>}
 
-        <AnimatePresence mode="wait">
-          {authMethod === 'password' ? (
-            <motion.div
-              key="password"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {error && <ErrorMessage>{error}</ErrorMessage>}
-
-              <Form onSubmit={handleSubmit}>
-                <InputGroup>
-                  <FaEnvelope className="icon" />
-                  <Input
-                    type="email"
-                    name="email"
-                    placeholder="Email address"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </InputGroup>
-
-                <InputGroup>
-                  <FaLock className="icon" />
-                  <PasswordInput
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  <span 
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
-                </InputGroup>
-
-                <ForgotPasswordLink>
-                  <Link to="/forgot-password">Forgot Password?</Link>
-                </ForgotPasswordLink>
-
-                <LoginButton type="submit" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </LoginButton>
-              </Form>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="otp"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <OTPAuth 
-                purpose="login"
-                onBack={() => setAuthMethod('password')}
-                onSuccess={(data) => {
-                  // Store token and redirect
-                  localStorage.setItem('token', data.token);
-                  window.location.href = '/dashboard';
-                }}
+          <Form onSubmit={handleSubmit}>
+            <InputGroup>
+              <FaEnvelope className="icon" />
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={handleChange}
+                required
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </InputGroup>
+
+            <InputGroup>
+              <FaLock className="icon" />
+              <PasswordInput
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <span 
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </InputGroup>
+
+            <ForgotPasswordLink>
+              <Link to="/forgot-password">Forgot Password?</Link>
+            </ForgotPasswordLink>
+
+            <LoginButton type="submit" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </LoginButton>
+          </Form>
+        </motion.div>
 
         <Divider>or</Divider>
 

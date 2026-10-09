@@ -3,15 +3,24 @@ const otpGenerator = require('otp-generator');
 const { v4: uuidv4 } = require('uuid');
 const { getPool } = require('../database/connection');
 
-// Create email transporter using configured Gmail account
-function createTransporter() {
+function isEmailConfigured() {
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
 
-  if (!user || !pass || user.includes('your_') || pass.includes('your_')) {
-    console.warn('⚠️  Email not configured. Set EMAIL_USER and EMAIL_PASS in .env');
-    return null;
-  }
+  return Boolean(
+    user &&
+    pass &&
+    !user.toLowerCase().includes('your_') &&
+    !pass.toLowerCase().includes('your_')
+  );
+}
+
+// Create email transporter using configured Gmail account
+function createTransporter() {
+  if (!isEmailConfigured()) return null;
+
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
 
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
@@ -127,18 +136,18 @@ const emailTemplates = {
 };
 
 class EmailService {
+  isConfigured() {
+    return isEmailConfigured();
+  }
+
   async sendEmail(to, templateName, templateData) {
     const transporter = createTransporter();
     const template = emailTemplates[templateName]?.(...templateData);
 
     if (!template) throw new Error(`Unknown email template: ${templateName}`);
 
-    // Always log for dev/testing
-    console.log(`📧 [Email] To: ${to} | Subject: ${template.subject}`);
-
     if (!transporter) {
-      console.warn('📧 Email not sent (transporter not configured)');
-      return { success: false, reason: 'transporter_not_configured' };
+      return { success: false, reason: 'Email is not configured' };
     }
 
     try {
@@ -147,10 +156,10 @@ class EmailService {
         to,
         ...template
       });
-      console.log(`✅ Email sent to ${to}`);
+      console.log(`Email sent to ${to}`);
       return { success: true, messageId: result.messageId };
     } catch (err) {
-      console.error(`❌ Email failed: ${err.message}`);
+      console.error(`Email delivery failed: ${err.message}`);
       return { success: false, reason: err.message };
     }
   }
@@ -181,19 +190,36 @@ class OTPService {
       [id, identifier, otp, purpose, expiresAt]
     );
 
-    console.log(`\n🔐 OTP [${purpose}] for ${identifier}: ${otp}\n`);
-    return otp;
+    return { otp, id };
   }
 
   async sendEmailOTP(email, purpose = 'login') {
     try {
-      const otp = await this.generateAndStore(email, purpose, 'email');
+      if (!isEmailConfigured()) {
+        if (process.env.NODE_ENV === 'development') {
+          const { otp } = await this.generateAndStore(email, purpose, 'email');
+          return { success: true, emailSent: false, developmentOtp: otp };
+        }
+
+        return {
+          success: false,
+          message: 'Email delivery is not configured. Set EMAIL_USER and EMAIL_PASS in the backend .env file.'
+        };
+      }
+
+      const { otp, id } = await this.generateAndStore(email, purpose, 'email');
       const emailSvc = new EmailService();
       const result = await emailSvc.sendEmail(email, 'otp', [otp, purpose]);
-      return { success: true, emailSent: result.success, otp: process.env.NODE_ENV === 'development' ? otp : undefined };
+      if (!result.success) {
+        const pool = getPool();
+        await pool.execute('UPDATE otp_verifications SET is_verified = TRUE WHERE id = ?', [id]);
+        return { success: false, message: 'Unable to deliver the OTP email. Check the backend email configuration and try again.' };
+      }
+
+      return { success: true, emailSent: true };
     } catch (err) {
       console.error('sendEmailOTP error:', err);
-      return { success: false, message: err.message };
+      return { success: false, message: 'Unable to send the OTP email. Please try again later.' };
     }
   }
 

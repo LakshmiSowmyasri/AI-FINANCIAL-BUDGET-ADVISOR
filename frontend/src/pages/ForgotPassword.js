@@ -90,6 +90,25 @@ const OTPGrid = styled.div`
   margin: 8px 0;
 `;
 
+const DevelopmentOtpNotice = styled.div`
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-canvas);
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 13px;
+
+  strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-main);
+    font-size: 22px;
+    letter-spacing: 0.2em;
+  }
+`;
+
 const OTPBox = styled.input`
   width: 48px; height: 56px;
   background: var(--bg-canvas); border: 1px solid var(--border);
@@ -171,6 +190,7 @@ export default function ForgotPassword() {
   const [step, setStep] = useState(1); // 1=email, 2=otp, 3=newpassword, 4=done
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [developmentOtp, setDevelopmentOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -192,8 +212,11 @@ export default function ForgotPassword() {
     if (!email) return toast.error('Please enter your email');
     setLoading(true);
     try {
-      await axios.post(`${API}/auth/forgot-password`, { email });
-      toast.success('OTP sent to your email!');
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data } = await axios.post(`${API}/auth/forgot-password`, { email: normalizedEmail });
+      setEmail(normalizedEmail);
+      setDevelopmentOtp(data.developmentOtp || '');
+      toast.success(data.developmentOtp ? 'Development OTP is shown below.' : 'OTP sent to your email!');
       setStep(2);
       startResendTimer();
     } catch (err) {
@@ -246,11 +269,14 @@ export default function ForgotPassword() {
   const handleResend = async () => {
     setLoading(true);
     try {
-      await axios.post(`${API}/auth/forgot-password`, { email });
-      toast.success('New OTP sent!');
+      const { data } = await axios.post(`${API}/auth/forgot-password`, { email });
+      setDevelopmentOtp(data.developmentOtp || '');
+      toast.success(data.developmentOtp ? 'New development OTP is shown below.' : 'New OTP sent!');
       setOtp(['', '', '', '', '', '']);
       startResendTimer();
-    } catch { toast.error('Failed to resend OTP'); }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to resend OTP');
+    }
     finally { setLoading(false); }
   };
 
@@ -293,7 +319,7 @@ export default function ForgotPassword() {
           </h1>
           <p>
             {step === 1 && 'Enter your email to receive a reset OTP'}
-            {step === 2 && `We sent a 6-digit code to ${email}`}
+            {step === 2 && (developmentOtp ? 'Enter the development code shown below' : `We sent a 6-digit code to ${email}`)}
             {step === 3 && 'Create a strong new password'}
             {step === 4 && 'Your password has been updated successfully'}
           </p>
@@ -323,6 +349,12 @@ export default function ForgotPassword() {
           {/* Step 2: OTP */}
           {step === 2 && (
             <motion.form key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleVerifyOTP}>
+              {developmentOtp && (
+                <DevelopmentOtpNotice>
+                  Local development only — this code was not emailed.
+                  <strong>{developmentOtp}</strong>
+                </DevelopmentOtpNotice>
+              )}
               <FormGroup>
                 <label>Enter 6-Digit OTP</label>
                 <OTPGrid onPaste={handleOtpPaste}>

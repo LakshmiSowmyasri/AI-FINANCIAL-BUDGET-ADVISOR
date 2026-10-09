@@ -57,7 +57,8 @@ export const AuthProvider = ({ children }) => {
       navigate('/dashboard');
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Registration failed');
+      const backendMessage = error.response?.data?.error || error.response?.data?.errors?.[0]?.msg || 'Registration failed';
+      toast.error(backendMessage);
       return false;
     }
   };

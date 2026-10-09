@@ -1,38 +1,9 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaEnvelope, FaLock, FaUser, FaPhone, FaEye, FaEyeSlash, FaRupeeSign, FaMoneyBillWave, FaCommentDots } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { FaEnvelope, FaLock, FaUser, FaPhone, FaEye, FaEyeSlash, FaRupeeSign, FaMoneyBillWave } from 'react-icons/fa';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
-import OTPAuth from '../components/OTPAuth';
-
-const TabContainer = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
-`;
-
-const Tab = styled.button`
-  flex: 1;
-  padding: 11px 16px;
-  border: 1px solid ${props => props.active ? 'var(--primary)' : 'var(--border)'};
-  border-radius: var(--radius-md);
-  background: ${props => props.active ? 'rgba(5, 150, 105, 0.1)' : 'var(--bg-canvas)'};
-  color: ${props => props.active ? 'var(--primary)' : 'var(--text-muted)'};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-
-  &:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-  }
-`;
 
 const RegisterContainer = styled.div`
   min-height: 100vh;
@@ -240,8 +211,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [authMethod, setAuthMethod] = useState('password');
-  
+
   const { register, user } = useAuth();
 
   if (user) {
@@ -259,9 +229,9 @@ const Register = () => {
     setError('');
 
     const userData = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || null,
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      phone: formData.phone ? formData.phone.trim() : null,
       password: formData.password,
       monthlyIncome: parseFloat(formData.monthlyIncome) || 0
     };
@@ -269,7 +239,8 @@ const Register = () => {
     const success = await register(userData);
     
     if (!success) {
-      setError('Registration failed. Please try again.');
+      const backendMessage = 'Registration failed. Please try again.';
+      setError(backendMessage);
     }
     
     setLoading(false);
@@ -288,126 +259,88 @@ const Register = () => {
           <p>Start your journey to financial freedom</p>
         </Logo>
 
-        <TabContainer>
-          <Tab 
-            active={authMethod === 'password'} 
-            onClick={() => setAuthMethod('password')}
-          >
-            <FaLock /> Password
-          </Tab>
-          <Tab 
-            active={authMethod === 'otp'} 
-            onClick={() => setAuthMethod('otp')}
-          >
-            <FaCommentDots /> OTP
-          </Tab>
-        </TabContainer>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {error && <ErrorMessage>{error}</ErrorMessage>}
 
-        <AnimatePresence mode="wait">
-          {authMethod === 'password' ? (
-            <motion.div
-              key="password"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {error && <ErrorMessage>{error}</ErrorMessage>}
-
-              <Form onSubmit={handleSubmit}>
-                <InputGroup>
-                  <FaUser className="icon" />
-                  <Input
-                    type="text"
-                    name="name"
-                    placeholder="Full Name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </InputGroup>
-
-                <InputGroup>
-                  <FaEnvelope className="icon" />
-                  <Input
-                    type="email"
-                    name="email"
-                    placeholder="Email address"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </InputGroup>
-
-                <InputRow>
-                  <InputGroup>
-                    <FaPhone className="icon" />
-                    <Input
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone (optional)"
-                      value={formData.phone}
-                      onChange={handleChange}
-                    />
-                  </InputGroup>
-
-                  <InputGroup>
-                    <FaMoneyBillWave className="icon" />
-                    <Input
-                      type="number"
-                      name="monthlyIncome"
-                      placeholder="Monthly Income"
-                      value={formData.monthlyIncome}
-                      onChange={handleChange}
-                      required
-                    />
-                  </InputGroup>
-                </InputRow>
-
-                <InputGroup>
-                  <FaLock className="icon" />
-                  <PasswordInput
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="Password (min 6 characters)"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    minLength="6"
-                  />
-                  <span 
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
-                </InputGroup>
-
-                <RegisterButton type="submit" disabled={loading}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </RegisterButton>
-              </Form>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="otp"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <OTPAuth 
-                purpose="register"
-                onBack={() => setAuthMethod('password')}
-                onSuccess={(data) => {
-                  // Store token and redirect
-                  localStorage.setItem('token', data.token);
-                  window.location.href = '/dashboard';
-                }}
+          <Form onSubmit={handleSubmit}>
+            <InputGroup>
+              <FaUser className="icon" />
+              <Input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                required
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </InputGroup>
+
+            <InputGroup>
+              <FaEnvelope className="icon" />
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </InputGroup>
+
+            <InputRow>
+              <InputGroup>
+                <FaPhone className="icon" />
+                <Input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone (optional)"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </InputGroup>
+
+              <InputGroup>
+                <FaMoneyBillWave className="icon" />
+                <Input
+                  type="number"
+                  name="monthlyIncome"
+                  placeholder="Monthly Income"
+                  value={formData.monthlyIncome}
+                  onChange={handleChange}
+                  required
+                />
+              </InputGroup>
+            </InputRow>
+
+            <InputGroup>
+              <FaLock className="icon" />
+              <PasswordInput
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password (min 6 characters)"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength="6"
+              />
+              <span 
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </InputGroup>
+
+            <RegisterButton type="submit" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </RegisterButton>
+          </Form>
+        </motion.div>
 
         <Divider>or</Divider>
 
